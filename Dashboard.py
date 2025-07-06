@@ -25,7 +25,7 @@ st.title("🚖 Dynamic Pricing Dashboard")
 
 # --- KPIs ---
 col1, col2, col3, col4 = st.columns(4)
-col1.metric("Avg Ride Cost", f"${filtered_df['Historical_Cost_of_Ride'].mean():.2f}")
+col1.metric("Avg Ride Cost", f"₹{filtered_df['Historical_Cost_of_Ride'].mean():.2f}")
 col2.metric("Avg Duration (min)", f"{filtered_df['Expected_Ride_Duration'].mean():.1f}")
 col3.metric("Rider-Driver Ratio", f"{(filtered_df['Number_of_Riders'].sum() / filtered_df['Number_of_Drivers'].sum()):.2f}")
 col4.metric("Avg Rating", f"{filtered_df['Average_Ratings'].mean():.2f}")
@@ -77,7 +77,7 @@ with st.expander("Adjust Inputs to Predict Ride Cost"):
     example_scaled = scaler.transform(example)
     prediction = model.predict(example_scaled)[0]
 
-    st.success(f"💰 Estimated Ride Cost: **${prediction:.2f}**")
+    st.success(f"💰 Estimated Ride Cost: **₹{prediction:.2f}**")
 
 # ----------------- Coefficient Visualization -----------------
 st.subheader("📊 Feature Impact on Price (Standardized Coefficients)")
