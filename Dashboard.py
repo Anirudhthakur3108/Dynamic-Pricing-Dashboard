@@ -40,10 +40,9 @@ fig2 = px.bar(pivot_table, x="Location_Category", y="Historical_Cost_of_Ride", c
 st.plotly_chart(fig2, use_container_width=True)
 
 # ----------------- What-If Scenario -----------------
-# ----------------- What-If Scenario -----------------
 st.subheader("🔧 What-If Pricing Scenario")
 
-with st.expander("Adjust Inputs to Predict Ride Cost (Model Comparison)"):
+with st.expander("Adjust Inputs to Predict Ride Cost"):
     col1, col2, col3 = st.columns(3)
     riders = col1.slider("Number of Riders", 10, 200, 50)
     drivers = col2.slider("Number of Drivers", 10, 200, 50)
@@ -53,6 +52,7 @@ with st.expander("Adjust Inputs to Predict Ride Cost (Model Comparison)"):
     rating = col4.slider("Average Rating", 1.0, 5.0, 4.0)
     duration = col5.slider("Ride Duration (min)", 5, 180, 60)
 
+    # Encode example scenario
     example = pd.DataFrame({
         "Number_of_Riders": [riders],
         "Number_of_Drivers": [drivers],
@@ -61,58 +61,37 @@ with st.expander("Adjust Inputs to Predict Ride Cost (Model Comparison)"):
         "Expected_Ride_Duration": [duration],
     })
 
-    # Model training setup
-    from sklearn.linear_model import LinearRegression
-    from sklearn.ensemble import RandomForestRegressor
-    from xgboost import XGBRegressor
-    from sklearn.model_selection import train_test_split
-    from sklearn.metrics import mean_absolute_error, r2_score
-
+    # Prepare training data
     features = ["Number_of_Riders", "Number_of_Drivers", "Number_of_Past_Rides", "Average_Ratings", "Expected_Ride_Duration"]
-    X = df[features]
-    y = df["Historical_Cost_of_Ride"]
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    model = LinearRegression()
+    model.fit(df[features], df["Historical_Cost_of_Ride"])
+    prediction = model.predict(example)[0]
 
-    # Linear Regression
-    lr = LinearRegression()
-    lr.fit(X_train, y_train)
-    lr_pred = lr.predict(example)[0]
-    y_pred_lr = lr.predict(X_test)
+    st.success(f"💰 Estimated Ride Cost: **₹{prediction:.2f}**")
 
-    # Random Forest
-    rf = RandomForestRegressor(n_estimators=100, random_state=42)
-    rf.fit(X_train, y_train)
-    rf_pred = rf.predict(example)[0]
-    y_pred_rf = rf.predict(X_test)
-
-    # XGBoost
-    xgb = XGBRegressor(n_estimators=100, learning_rate=0.1, max_depth=5, random_state=42)
-    xgb.fit(X_train, y_train)
-    xgb_pred = xgb.predict(example)[0]
-    y_pred_xgb = xgb.predict(X_test)
-
-    # Display predictions
-    st.markdown("### 💡 Model Predictions")
-    col1, col2, col3 = st.columns(3)
-    col1.metric("Linear Regression", f"₹{lr_pred:.2f}")
-    col2.metric("Random Forest", f"₹{rf_pred:.2f}")
-    col3.metric("XGBoost", f"₹{xgb_pred:.2f}")
-
-    # Show performance metrics
-    with st.expander("📈 Model Performance (on Test Data)"):
-        perf = pd.DataFrame({
-            "Model": ["Linear Regression", "Random Forest", "XGBoost"],
-            "R² Score": [
-                r2_score(y_test, y_pred_lr),
-                r2_score(y_test, y_pred_rf),
-                r2_score(y_test, y_pred_xgb),
-            ],
-            "MAE (₹)": [
-                mean_absolute_error(y_test, y_pred_lr),
-                mean_absolute_error(y_test, y_pred_rf),
-                mean_absolute_error(y_test, y_pred_xgb),
-            ]
-        })
-        st.dataframe(perf.style.format({"R² Score": "{:.2f}", "MAE (₹)": "{:.2f}"}))
-
+    # ----------------- Coefficient Visualization -----------------
+    st.subheader("📉 Linear Regression Coefficients")
+    
+    # Get coefficients
+    coeff_df = pd.DataFrame({
+        "Feature": features,
+        "Coefficient": lr.coef_
+    }).sort_values("Coefficient", ascending=False)
+    
+    # Visualize
+    fig = px.bar(
+        coeff_df,
+        x="Coefficient",
+        y="Feature",
+        orientation="h",
+        title="Impact of Features on Predicted Price (₹)",
+        color="Coefficient",
+        color_continuous_scale="RdBu",
+    )
+    
+    st.plotly_chart(fig, use_container_width=True)
+    
+    # Optional: Display raw data
+    with st.expander("🔍 View Coefficient Values"):
+        st.dataframe(coeff_df.style.format({"Coefficient": "{:.2f}"}))
 
