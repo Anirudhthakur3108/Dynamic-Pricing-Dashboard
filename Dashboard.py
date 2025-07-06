@@ -75,7 +75,7 @@ with st.expander("Adjust Inputs to Predict Ride Cost"):
     # Get coefficients
     coeff_df = pd.DataFrame({
         "Feature": features,
-        "Coefficient": lr.coef_
+        "Coefficient": model.coef_
     }).sort_values("Coefficient", ascending=False)
     
     # Visualize
